@@ -4,6 +4,7 @@ from os import remove
 import pyaudio, json
 import sounddevice, soundfile
 import openai
+import playsound
 
 chunk = 1024
 channels = 1
@@ -56,7 +57,7 @@ add_message("system", "Your name is Anna.")
 def talk(text):
     # Define the request headers and body
     headers = {"xi-api-key": api_key, "Content-Type": "application/json"}
-    payload = {"text": text, "voice_settings": {"stability": 0.8, "similarity_boost": 0.8}}
+    payload = {"text": text, "voice_settings": {"stability": 0.50, "similarity_boost": 0.85}}
 
     # Send the API request and retrieve the audio data
     # print("Requesting audio data...")
@@ -70,16 +71,18 @@ def talk(text):
             f.write(audio_data)
         # Play the audio file using the `playsound` library
         # playsound(os.path.dirname(__file__) + '/' + tmp_file)
-        data, fs = soundfile.read(tmp_file)
-        
-        sounddevice.play(data, fs)
-        sounddevice.wait()
+        # data, fs = soundfile.read(tmp_file)
+        #
+        # sounddevice.play(data, fs)
+        # sounddevice.wait()
+        playsound.playsound(os.path.dirname(__file__) + '\\' + tmp_file)
         print("Finished")
 
         # Delete the temporary file
-        remove(tmp_file)
+        os.remove(tmp_file)
     else:
         print("Error: API request failed with status code", response.status_code)
+
 
 while True:
     # text = input("Input: ")
