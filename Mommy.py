@@ -1,7 +1,8 @@
-from vosk import Model, KaldiRecognizer
+# from vosk import Model, KaldiRecognizer
+# import pyaudio
 from requests import post
-import os
-import pyaudio, json
+from os import remove
+import json
 import sounddevice, soundfile
 import openai
 import speech_recognition as sr
@@ -83,7 +84,7 @@ def talk(text):
         print("Finished")
 
         # Delete the temporary file
-        remove(tmp_file)
+        os.remove(tmp_file)
     else:
         print("Error: API request failed with status code", response.status_code)
 
