@@ -1,27 +1,33 @@
 from vosk import Model, KaldiRecognizer
 from requests import post
-from os import remove
+import os
 import pyaudio, json
 import sounddevice, soundfile
 import openai
+import speech_recognition as sr
 
 chunk = 1024
 channels = 1
 rate = 44100
-model = Model("vosk-model-small-en-us-0.15")
-recognizer = KaldiRecognizer(model, rate)
-format = pyaudio.paInt16
+#model = Model("vosk-model-small-en-us-0.15")
+#recognizer = KaldiRecognizer(model, rate)
+#format = pyaudio.paInt16
+rec = sr.Recognizer()
 api_url = "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL"
 api_key = "974c8544deb426b7f80da7e33e0646ad"
 messages = []
 openai.api_key = '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'
-mic = pyaudio.PyAudio()
+#mic = pyaudio.PyAudio()
 
 print(sounddevice.query_devices())
-sounddevice.default.device = int(input("Device Input: "))
+sounddevice.default.device = int(input("Device Output: "))
 
-stream = mic.open(format=format, channels=channels, rate=rate, input=True, frames_per_buffer=chunk)
-stream.start_stream()
+for index, name in enumerate(sr.Microphone.list_microphone_names()):
+    print("Microphone with name \"{1}\" found for `Microphone(device_index={0})`".format(index, name))
+device_index=int(input("Device Input:"))
+
+#stream = mic.open(format=format, channels=channels, rate=rate, input=True, frames_per_buffer=chunk)
+#stream.start_stream()
 
 
 def add_message(role, content):
@@ -56,7 +62,7 @@ add_message("system", "Your name is Anna.")
 def talk(text):
     # Define the request headers and body
     headers = {"xi-api-key": api_key, "Content-Type": "application/json"}
-    payload = {"text": text, "voice_settings": {"stability": 0.8, "similarity_boost": 0.8}}
+    payload = {"text": text, "voice_settings": {"stability": 0.5, "similarity_boost": 0.8}}
 
     # Send the API request and retrieve the audio data
     # print("Requesting audio data...")
@@ -86,12 +92,20 @@ while True:
     # add_message("user", text)
     # reply = send_message()
     # talk(reply)
-    
-    data = stream.read(chunk)
-    if recognizer.AcceptWaveform(data):
-        result = json.loads(recognizer.Result())
-        if result['text'] != "":
-            print(f"You: {result['text']}")           
-            add_message("user", result['text'])
+    #data = stream.read(chunk)
+    with sr.Microphone(device_index=device_index) as source:
+        rec.adjust_for_ambient_noise(source)
+        audio = rec.listen(source)
+    result = rec.recognize_google(audio,language='en-US',show_all=True)
+#     if recognizer.AcceptWaveform(data):
+#         result = json.loads(recognizer.Result())
+#         if result['text'] != "":
+#             print(f"You: {result['text']}")           
+#             add_message("user", result['text'])
+    if len(result) != 0:
+        transcribed_text = result['alternative'][0]['transcript']
+        if transcribed_text != "":
+            print(f"You: {transcribed_text}")
+            add_message("user", transcribed_text)
             reply = send_message()
             talk(reply)
